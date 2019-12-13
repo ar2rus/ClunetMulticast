@@ -3,6 +3,9 @@
 
 #include <functional>
 
+#include <ESP8266WiFi.h>
+#include "ESPAsyncUDP.h"
+
 
 #define CLUNET_SUPRADIN_ADDRESS 0x00
 #define CLUNET_BROADCAST_ADDRESS 0xFF

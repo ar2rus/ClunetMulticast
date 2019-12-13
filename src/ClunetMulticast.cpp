@@ -1,7 +1,3 @@
-
-#include <ESP8266WiFi.h>
-#include "ESPAsyncUDP.h"
-
 #include "ClunetMulticast.h"
 
 ClunetMulticast::ClunetMulticast(uint8_t deviceId, String deviceName){
@@ -26,7 +22,7 @@ void ClunetMulticast::onMessage(ClunetMulticastMessageHandlerFunction fn){
         if (packet.isMulticast()){
           if (packet.length() >= CLUNET_OFFSET_DATA) {
             clunet_message* m = (clunet_message*)packet.data();
-            if (m->dst_address == _id || m->dst_address == CLUNET_BROADCAST_ADDRESS){
+            if (m->src_address != _id && (m->dst_address == _id || m->dst_address == CLUNET_BROADCAST_ADDRESS)){
                 switch(m->command){
                   case CLUNET_COMMAND_DISCOVERY:
                     send(m->src_address, CLUNET_COMMAND_DISCOVERY_RESPONSE, (uint8_t*)_name.c_str(), _name.length());

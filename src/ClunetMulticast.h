@@ -444,11 +444,11 @@
 #define CLUNET_OFFSET_DATA 4
 
 typedef struct {
-  uint8_t src_address;
-  uint8_t dst_address;
-  uint8_t command;
-  uint8_t size;
-  uint8_t data[CLUNET_BUFFER_SIZE];
+  unsigned char src_address;
+  unsigned char dst_address;
+  unsigned char command;
+  unsigned char size;
+  char data[CLUNET_BUFFER_SIZE];
 } clunet_message;
 
 
@@ -460,18 +460,20 @@ typedef std::function<void(clunet_message* message)> ClunetMulticastMessageHandl
 
 class ClunetMulticast{
   private:
-    uint8_t _id;
+    unsigned char _id;
     String _name;
     
     AsyncUDP _udp;
   public: 
-    ClunetMulticast(uint8_t deviceId, String deviceName);
+    ClunetMulticast(unsigned char deviceId, String deviceName);
 
     bool connect();
     void close();
     
     void onMessage(ClunetMulticastMessageHandlerFunction fn);
-    size_t send(uint8_t address, uint8_t command, uint8_t* data, uint8_t size);
+	
+    size_t send(unsigned char address, unsigned char command, char* data, unsigned char size);
+    size_t broadcast_send(unsigned char command, char* data, unsigned char size);
 
     bool connected();
 };

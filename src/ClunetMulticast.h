@@ -10,11 +10,11 @@
 
 
 typedef struct {
-  unsigned char src;
-  unsigned char dst;
-  unsigned char command;
-  unsigned char size;
-  char data[CLUNET_PACKET_DATA_SIZE];
+	unsigned char src;
+	unsigned char dst;
+	unsigned char command;
+	unsigned char size;
+	char data[CLUNET_PACKET_DATA_SIZE];
 } clunet_packet;
 
 
@@ -25,33 +25,33 @@ const IPAddress CLUNET_MULTICAST_IP(234, 5, 6, 7);
 typedef std::function<void(clunet_packet* packet)> ClunetMulticastPacketHandlerFunction;
 
 class ClunetMulticast{
-  private:
-    unsigned char _id;
-    String _name;
-    
-    AsyncUDP _udp;
-	
-	ClunetMulticastPacketHandlerFunction _onPacketSentFn;
-	ClunetMulticastPacketHandlerFunction _onPacketReceivedFn;
-	ClunetMulticastPacketHandlerFunction _onPacketSniffFn;
-	
-	size_t _send(unsigned char sender, unsigned char address, unsigned char command, char* data, unsigned char size,
-	ClunetMulticastPacketHandlerFunction onPacketSentFn = NULL);
-  public: 
-    ClunetMulticast(unsigned char deviceId, String deviceName);
-
-    bool connect();
-    void close();
-	
-	void onPacketSent(ClunetMulticastPacketHandlerFunction fn);
-    void onPacketReceived(ClunetMulticastPacketHandlerFunction fn);
-	void onPacketSniff(ClunetMulticastPacketHandlerFunction fn);
-	
-    size_t send(unsigned char address, unsigned char command, char* data, unsigned char size);
-    size_t send_broadcast(unsigned char command, char* data, unsigned char size);
-	size_t send_fake(unsigned char sender, unsigned char address, unsigned char command, char* data, unsigned char size);
-
-    bool connected();
+	private:
+		unsigned char _id;
+		String _name;
+		
+		AsyncUDP _udp;
+		
+		ClunetMulticastPacketHandlerFunction _onPacketSentFn;
+		ClunetMulticastPacketHandlerFunction _onPacketReceivedFn;
+		ClunetMulticastPacketHandlerFunction _onPacketSniffFn;
+		
+		size_t _send(unsigned char sender, unsigned char address, unsigned char command, char* data, unsigned char size,
+		ClunetMulticastPacketHandlerFunction onPacketSentFn = NULL);
+	public: 
+		ClunetMulticast(unsigned char deviceId, String deviceName);
+		
+		bool connect();
+		void close();
+		
+		void onPacketSent(ClunetMulticastPacketHandlerFunction fn);
+		void onPacketReceived(ClunetMulticastPacketHandlerFunction fn);
+		void onPacketSniff(ClunetMulticastPacketHandlerFunction fn);
+		
+		size_t send(unsigned char address, unsigned char command, char* data, unsigned char size);
+		size_t send_broadcast(unsigned char command, char* data, unsigned char size);
+		size_t send_fake(unsigned char sender, unsigned char address, unsigned char command, char* data, unsigned char size);
+		
+		bool connected();
 };
 
 #endif

@@ -15,18 +15,31 @@ bool ClunetMulticast::connect(){
         if (m->src != _id && (m->dst == _id || m->dst == CLUNET_ADDRESS_BROADCAST)){
           switch(m->command){
             case CLUNET_COMMAND_DISCOVERY:
-            send(m->src, CLUNET_COMMAND_DISCOVERY_RESPONSE, (char*)_name.c_str(), _name.length());
-            break;
+				send(m->src, CLUNET_COMMAND_DISCOVERY_RESPONSE, (char*)_name.c_str(), _name.length());
+				break;
             case CLUNET_COMMAND_PING:
-            send(m->src, CLUNET_COMMAND_PING_REPLY, m->data, m->size);
-            break;
+				send(m->src, CLUNET_COMMAND_PING_REPLY, m->data, m->size);
+				break;
             case CLUNET_COMMAND_REBOOT:
-            ESP.restart();
-            break;
+				ESP.restart();
+				break;
+			case CLUNET_COMMAND_TIME: {
+				  time_t t;
+				  time(&t);
+				  if (t){
+					char week_day = (char)weekday(t);
+					if (!--week_day){
+						week_day = 7;
+					}
+					char time_info[7] = {(char)(year(t)-2000), (char)month(t), (char)day(t), (char)hour(t), (char)minute(t), (char)second(t), week_day};
+					send(m->src, CLUNET_COMMAND_TIME_INFO, &time_info[0], sizeof(time_info));
+				  }
+				}
+				break;
             default:
-            if (_onPacketReceivedFn){
-              _onPacketReceivedFn(m);
-            }
+				if (_onPacketReceivedFn){
+				  _onPacketReceivedFn(m);
+				}
           }
         }
         if (_onPacketSniffFn){

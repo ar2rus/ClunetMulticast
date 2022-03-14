@@ -28,7 +28,7 @@ char getTimeInfo(char* buf){
 			buf[4] = (char)timeinfo.tm_min;
 			buf[5] = (char)timeinfo.tm_sec;
 			buf[6] = (char)timeinfo.tm_wday;
-			if (!buf[6]++){
+			if (buf[6] == 0){
 				buf[6] = 7;
 			}
 			return TIME_INFO_PACKET_SIZE;

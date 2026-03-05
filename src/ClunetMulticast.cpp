@@ -1,7 +1,7 @@
 #include "ClunetMulticast.h"
 
 ClunetMulticast::ClunetMulticast(unsigned char deviceId, String deviceName)
-: _responsesQueue(LinkedList<clunet_response*>([](clunet_response *m){ delete  m; })){
+: _responsesQueue(LinkedList<clunet_response*>([](clunet_response *m){ free(m); })){
   _id = deviceId;
   _name = deviceName;
   
@@ -41,14 +41,17 @@ char getTimeInfo(char* buf){
 bool ClunetMulticast::connect(){
   bool r = _udp.listenMulticast(CLUNET_MULTICAST_IP, CLUNET_MULTICAST_PORT);
   if (r){
-    _udp.onPacket([this](AsyncUDPPacket packet) {
-      if (packet.isMulticast()){
-        if (packet.length() >= CLUNET_PACKET_OFFSET_DATA) {
-			clunet_packet* m = (clunet_packet*)packet.data();
-			  			
-			if (m->src != _id && m->dst == _id){
-				_handleResponse(m);
-			}
+	    _udp.onPacket([this](AsyncUDPPacket packet) {
+	      if (packet.isMulticast()){
+	        if (packet.length() >= CLUNET_PACKET_OFFSET_DATA) {
+				clunet_packet* m = (clunet_packet*)packet.data();
+				if (m->size > CLUNET_PACKET_DATA_SIZE || packet.length() != (CLUNET_PACKET_OFFSET_DATA + m->size)){
+					return;
+				}
+				  			
+				if (m->src != _id && m->dst == _id){
+					_handleResponse(m);
+				}
 			  
 			if (_onPacketSniffFn){
 				_onPacketSniffFn(m);
@@ -143,9 +146,11 @@ void ClunetMulticast::_handleResponse(clunet_packet* packet){
 	if (_responseFilterFn){
 		if (_responseFilterFn(packet)){
 			clunet_response* response = (clunet_response*)malloc(packet->len() + sizeof(clunet_response));
-			response->requestId = _requestId;
-			packet->copy(&response->packet);
-			_responsesQueue.add(response);
+			if (response){
+				response->requestId = _requestId;
+				packet->copy(&response->packet);
+				_responsesQueue.add(response);
+			}
 		}
 	}
 }
@@ -159,14 +164,17 @@ int ClunetMulticast::request(unsigned char address, unsigned char command, char*
   
   ++_requestId;
   
-  while(!_responsesQueue.isEmpty() && _requestId - _responsesQueue.front()->requestId >= REQUEST_HISTORY_LENGTH){
-    _responsesQueue.remove(_responsesQueue.front());
-  }
-  
-  send(address, command, data, size);
-  _ticker.once_ms(timeout, [this](){
-	  if (_onResponseReceivedHandlerFn){
-		_onResponseReceivedHandlerFn(_requestId, &_responsesQueue);
+	  while(!_responsesQueue.isEmpty() && _requestId - _responsesQueue.front()->requestId >= REQUEST_HISTORY_LENGTH){
+	    _responsesQueue.remove(_responsesQueue.front());
+	  }
+	  
+	  if (!send(address, command, data, size)){
+		  _responseFilterFn = NULL;
+		  return 0;
+	  }
+	  _ticker.once_ms(timeout, [this](){
+		  if (_onResponseReceivedHandlerFn){
+			_onResponseReceivedHandlerFn(_requestId, &_responsesQueue);
 	  }
 	  _responseFilterFn = NULL;
   });
